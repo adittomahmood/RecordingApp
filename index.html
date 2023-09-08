@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen and Microphone Recorder</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.7.3/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <audio id="beepSound">
+      <source src="./Audio/Beep.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+    
+  </head>
+  <body class="bg-gradient-to-r from-yellow-300 via-orange-500 to-red-500">
+    
+    <div class="min-h-screen flex flex-col items-center justify-center">
+      <div class="max-w-lg p-4 bg-white rounded-lg shadow-lg">
+        <h1 class="text-3xl font-black mb-4">
+          Screen and Microphone Recorder
+        </h1>
+
+        <div class="flex justify-center items-center">
+          <video id="videoElement" class="rounded-md" autoplay muted></video>
+          <video
+            id="recordedVideo"
+            class="rounded-md"
+            style="display: none"
+            controls
+          ></video>
+        </div>
+
+        <div
+          id="timestamp"
+          class="mt-2 text-sm font-semibold text-gray-600"
+        ></div>
+        <div class="flex flex-col gap-2 mt-4">
+          <button
+            id="startRecord"
+            class="btn btn-outline btn-success font-extrabold px-4 py-2  transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            Start Recording
+          </button>
+          <button
+            id="stopRecord"
+            class="btn btn-outline btn-error font-extrabold px-4 py-2transition duration-300 ease-in-out transform hover:scale-105"
+            disabled
+          >
+            Stop Recording
+          </button>
+          <button
+            id="clearRecording"
+            class="btn btn-outline font-extrabold px-4 py-2 transition duration-300 ease-in-out transform hover:scale-105"
+            disabled
+          >
+            Clear
+          </button>
+          <a
+            id="downloadLink"
+            class="btn btn-outline btn-warning font-extrabold mt-2 block px-4 py-4 transition duration-300 ease-in-out transform hover:scale-105 hover:shadow-md text-center"
+            style="display: none"
+            >Download Recording</a
+          >
+    </div>
+
+    <script>
+      let mediaRecorder;
+      let chunks = [];
+      let screenStream;
+      const videoElement = document.getElementById("videoElement");
+      const startRecordButton = document.getElementById("startRecord");
+      const stopRecordButton = document.getElementById("stopRecord");
+      const downloadLink = document.getElementById("downloadLink");
+      const clearRecordingButton = document.getElementById("clearRecording");
+      const timestampElement = document.getElementById("timestamp");
+      const beepSound = document.getElementById("beepSound");
+      let recordingInterval;
+      let startTime;
+
+      async function startRecording() {
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true,
+          });
+          videoElement.srcObject = screenStream;
+
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+
+          const combinedStream = new MediaStream([
+            ...screenStream.getVideoTracks(),
+            ...audioStream.getAudioTracks(),
+          ]);
+
+          mediaRecorder = new MediaRecorder(combinedStream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              chunks.push(event.data);
+            }
+          };
+
+          mediaRecorder.onstart = () => {
+            beepSound.play();
+            startTime = Date.now();
+            recordingInterval = setInterval(updateTimestamp, 1000);
+            clearRecordingButton.disabled = true;
+            startRecordButton.innerText = "Recording"; 
+          };
+
+          mediaRecorder.onstop = () => {
+            clearInterval(recordingInterval);
+            const blob = new Blob(chunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.style.display = "block";
+            downloadLink.download = "recording.webm";
+            clearRecordingButton.disabled = false;
+            startRecordButton.innerText = "Start Recording"; 
+
+          
+            const previewVideo = document.getElementById("videoElement");
+            previewVideo.style.display = "none";
+
+            const recordedVideo = document.getElementById("recordedVideo");
+            recordedVideo.src = url;
+            recordedVideo.style.display = "block";
+
+            chunks = [];
+
+            beepSound.play();
+          };
+
+          mediaRecorder.start();
+          startRecordButton.disabled = true;
+          stopRecordButton.disabled = false;
+          clearRecordingButton.disabled = true;
+        } catch (error) {
+          console.error("Error accessing screen or microphone:", error);
+        }
+      }
+
+      function stopRecording() {
+        mediaRecorder.stop();
+        screenStream.getTracks().forEach((track) => track.stop());
+        startRecordButton.disabled = false;
+        stopRecordButton.disabled = true;
+        clearRecordingButton.disabled = false;
+        beepSound.play();
+      }
+
+      function updateTimestamp() {
+        const currentTime = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(currentTime / 60)
+          .toString()
+          .padStart(2, "0");
+        const seconds = (currentTime % 60).toString().padStart(2, "0");
+        timestampElement.textContent = `Recording: ${minutes}:${seconds}`;
+      }
+
+      function clearRecording() {
+        chunks = [];
+        downloadLink.style.display = "none";
+        timestampElement.textContent = "";
+        clearRecordingButton.disabled = true;
+      }
+
+      startRecordButton.addEventListener("click", startRecording);
+      stopRecordButton.addEventListener("click", stopRecording);
+      clearRecordingButton.addEventListener("click", clearRecording);
+    </script>
+  </body>
+</html>
