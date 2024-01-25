@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recording App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@1.14.0/dist/full.css"
+      rel="stylesheet"
+    />
+    <style>
+      .btn-red {
+        @apply bg-red-500 text-white;
+      }
+      .bold-black {
+        font-weight: bold;
+        color: black;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 p-4 flex justify-center items-center h-screen">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-md shadow-md w-full">
+      <h1 class="text-2xl font-bold mb-4 text-center">
+        <strong class="text-black">Recording App</strong>
+      </h1>
+      <video
+        id="recordedVideo"
+        class="w-full"
+        controls
+        style="display: none"
+      ></video>
+      <div class="flex flex-col items-center space-y-4 my-4">
+        <button id="startBtn" class="btn btn-active btn-accent">
+          Start Recording
+        </button>
+        <button id="clearBtn" class="btn btn-error">Clear</button>
+      </div>
+      <audio id="beepAudio" src="./Audio/Beep.mp3"></audio>
+    </div>
+
+    <script>
+      let chunks = [];
+      let isRecording = false;
+      let startTime;
+      let mediaRecorder;
+      let timestampUpdateInterval;
+
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const timestamp = document.getElementById("timestamp");
+      const recordedVideo = document.getElementById("recordedVideo");
+
+      startBtn.addEventListener("click", startRecording);
+      clearBtn.addEventListener("click", clearRecording);
+
+      async function startRecording() {
+        try {
+          isRecording = true;
+          startTime = Date.now();
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              chunks.push(event.data);
+            }
+          };
+
+          mediaRecorder.onstop = () => {
+            isRecording = false;
+            const blob = new Blob(chunks, { type: "video/webm" });
+            chunks = [];
+            const url = URL.createObjectURL(blob);
+            recordedVideo.src = url;
+            recordedVideo.style.display = "block";
+          };
+
+          mediaRecorder.start();
+          beepAudio.play();
+        } catch (error) {
+          console.error("Error accessing screen and audio input:", error);
+          alert(
+            "Error accessing screen and audio input: The screen and audio input devices are not available."
+          );
+        }
+      }
+
+      function clearRecording() {
+        chunks = [];
+        recordedVideo.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
