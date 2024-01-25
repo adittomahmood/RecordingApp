@@ -21,6 +21,14 @@
         color: black;
       }
     </style>
+    <style>
+      @media (max-width: 640px) {
+        /* Add responsive styles for smaller screens */
+        .max-w-md {
+          max-width: 100%;
+        }
+      }
+    </style>
   </head>
   <body class="bg-gray-100 p-4 flex justify-center items-center h-screen">
     <div class="max-w-md mx-auto bg-white p-8 rounded-md shadow-md w-full">
@@ -39,7 +47,7 @@
         </button>
         <button id="clearBtn" class="btn btn-error">Clear</button>
       </div>
-      <audio id="beepAudio" src="./Audio/Beep.mp3"></audio>
+      <audio id="beepAudio" src="./Audio/Beep.mp3" preload="auto"></audio>
     </div>
 
     <script>
@@ -50,17 +58,21 @@
       let timestampUpdateInterval;
 
       const startBtn = document.getElementById("startBtn");
-      const stopBtn = document.getElementById("stopBtn");
       const clearBtn = document.getElementById("clearBtn");
-      const downloadBtn = document.getElementById("downloadBtn");
-      const timestamp = document.getElementById("timestamp");
       const recordedVideo = document.getElementById("recordedVideo");
+      const beepAudio = document.getElementById("beepAudio");
 
       startBtn.addEventListener("click", startRecording);
       clearBtn.addEventListener("click", clearRecording);
 
       async function startRecording() {
         try {
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            alert(
+              "Screen and audio input may not be available on this device."
+            );
+            return;
+          }
           isRecording = true;
           startTime = Date.now();
           const stream = await navigator.mediaDevices.getDisplayMedia({
