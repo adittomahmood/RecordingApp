@@ -12,15 +12,7 @@
       href="https://cdn.jsdelivr.net/npm/daisyui@1.14.0/dist/full.css"
       rel="stylesheet"
     />
-    <style>
-      .btn-red {
-        @apply bg-red-500 text-white;
-      }
-      .bold-black {
-        font-weight: bold;
-        color: black;
-      }
-    </style>
+
     <style>
       @media (max-width: 640px) {
         .max-w-md {
@@ -101,7 +93,9 @@
           beepAudio.play();
         } catch (error) {
           console.error("Error accessing screen and audio input:", error);
-          alert("You are using mobile device.Please use PC/Desktop");
+          alert(
+            "You are using mobile device.Please use PC/Desktop or you have cancel the recording"
+          );
         }
       }
 
