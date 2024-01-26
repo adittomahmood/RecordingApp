@@ -60,7 +60,7 @@
         try {
           if (/Mobi|Android/i.test(navigator.userAgent)) {
             alert(
-              "Screen and audio input may not be available on this device."
+              "Please use a PC/desktop. You are currently using a mobile device."
             );
             return;
           }
@@ -93,9 +93,7 @@
           beepAudio.play();
         } catch (error) {
           console.error("Error accessing screen and audio input:", error);
-          alert(
-            "You are using mobile device.Please use PC/Desktop or you have cancel the recording"
-          );
+          alert("You have canceled the recording");
         }
       }
 
