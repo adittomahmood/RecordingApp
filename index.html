@@ -76,9 +76,11 @@
           startTime = Date.now();
           const stream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
-            audio: true,
+            audio: { echoCancellation: true },
           });
-          mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "video/webm;codecs=vp9,opus",
+          });
 
           mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
@@ -99,9 +101,7 @@
           beepAudio.play();
         } catch (error) {
           console.error("Error accessing screen and audio input:", error);
-          alert(
-            "Error accessing screen and audio input: The screen and audio input devices are not available."
-          );
+          alert("You are using mobile device.Please use PC/Desktop");
         }
       }
 
