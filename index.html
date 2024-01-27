@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html data-theme="light" lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recording App</title>
+    <title>Easily Record Your Screen</title>
+    <link
+      rel="shortcut icon"
+      href="https://img.icons8.com/papercut/60/record.png"
+      type="image/x-icon"
+    />
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -12,31 +17,37 @@
       href="https://cdn.jsdelivr.net/npm/daisyui@1.14.0/dist/full.css"
       rel="stylesheet"
     />
-
-    <style>
-      @media (max-width: 640px) {
-        .max-w-md {
-          max-width: 100%;
-        }
-      }
-    </style>
   </head>
-  <body class="bg-gray-100 p-4 flex justify-center items-center h-screen">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-md shadow-md w-full">
-      <h1 class="text-2xl font-bold mb-4 text-center">
-        <strong class="text-black">Recording App</strong>
+  <body
+    class="h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 to-green-200"
+  >
+    <div class="max-w-xl bg-white mx-auto p-12 rounded-md shadow-md w-full">
+      <h1 class="text-4xl font-extrabold mb-6 text-center text-indigo-700">
+        <span class="text-black">Easily Record Your Screen</span>
       </h1>
-      <video
-        id="recordedVideo"
-        class="w-full"
-        controls
-        style="display: none"
-      ></video>
-      <div class="flex flex-col items-center space-y-4 my-4">
-        <button id="startBtn" class="btn btn-active btn-accent">
+
+      <div class="video-container">
+        <video
+          id="recordedVideo"
+          class="w-full rounded-md overflow-hidden"
+          controls
+          style="display: none"
+        ></video>
+      </div>
+      <div class="btn-container flex flex-col items-center space-y-4 my-6">
+        <button
+          id="startBtn"
+          class="btn btn-primary py-2 px-6 rounded-full transition duration-300 transform hover:scale-105"
+        >
           Start Recording
         </button>
-        <button id="clearBtn" class="btn btn-error">Clear</button>
+
+        <button
+          id="clearBtn"
+          class="btn btn-clear py-2 px-6 rounded-full transition duration-300 transform hover:scale-105"
+        >
+          Clear
+        </button>
       </div>
       <audio id="beepAudio" src="./Audio/Beep.mp3" preload="auto"></audio>
     </div>
@@ -66,10 +77,19 @@
           }
           isRecording = true;
           startTime = Date.now();
+
+          startBtn.textContent = "Recording...";
+          startBtn.disabled = true;
+          clearBtn.disabled = true;
+
           const stream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
-            audio: { echoCancellation: true },
+            audio: {
+              echoCancellation: true,
+              mediaSource: "audio",
+            },
           });
+
           mediaRecorder = new MediaRecorder(stream, {
             mimeType: "video/webm;codecs=vp9,opus",
           });
@@ -87,19 +107,39 @@
             const url = URL.createObjectURL(blob);
             recordedVideo.src = url;
             recordedVideo.style.display = "block";
+
+            startBtn.textContent = "Start Recording";
+            startBtn.disabled = false;
+            clearBtn.disabled = false;
+            clearInterval(timestampUpdateInterval);
           };
 
           mediaRecorder.start();
           beepAudio.play();
+
+          timestampUpdateInterval = setInterval(updateTimestamp, 1000);
         } catch (error) {
           console.error("Error accessing screen and audio input:", error);
           alert("You have canceled the recording");
         }
       }
 
+      function updateTimestamp() {
+        if (isRecording) {
+          const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+          const minutes = Math.floor(elapsedTime / 60);
+          const seconds = elapsedTime % 60;
+          const formattedTime = `${minutes
+            .toString()
+            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          startBtn.textContent = `Recording... ${formattedTime}`;
+        }
+      }
+
       function clearRecording() {
         chunks = [];
         recordedVideo.style.display = "none";
+        clearInterval(timestampUpdateInterval);
       }
     </script>
   </body>
